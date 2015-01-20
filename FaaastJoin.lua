@@ -49,6 +49,13 @@ function FaaastJoin:OnLoad()
 	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuPlayer", 			"OnContextMenu", self) -- 2 args + 2 optional
 	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuPlayerDetailed", 	"OnContextMenu", self) -- 3 args + 1 optional
 	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuFriend", 			"OnFriendContextMenu", self) -- 2 args
+	
+	local GeminiLogging = Apollo.GetPackage("Gemini:Logging-1.2").tPackage
+    FaaastJoin.log = GeminiLogging:GetLogger({
+        level = GeminiLogging.DEBUG,
+        pattern = "%d %n %c %l - %m",
+        appender = "GeminiConsole"
+    })
 end
 
 -----------------------------------------------------------------------------------------------
@@ -73,6 +80,12 @@ function FaaastJoin:OnDocLoaded()
 		Apollo.RegisterSlashCommand("fjdebug", "OnFaaastJoinOn", self)
 
 		-- Do additional Addon initialization here	
+		self.addon = Apollo.GetAddon("ContextMenuPlayer")
+		if self.addon == nil then
+			self.log:fatal("addon = nil")
+		end
+		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuPlayer", self.addon)
+		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuPlayerDetailed", self.addon)
 	end
 end
 
@@ -83,12 +96,24 @@ end
 
 -- on SlashCommand "/fjdebug"
 function FaaastJoin:OnFaaastJoinOn()
-	Print("Test")
+	FaaastJoin.log:debug("Test")
+
 end
 
 -- on Context Menu
 function FaaastJoin:OnContextMenu(wndParent, strTarget, unitTarget, tOptionalCharacterData)
-	--self.left, self.top, self.right, self.bottom = wndParent:GetAnchorPoints()
+	self.addon:Initialize(wndParent, strTarget, unitTarget, tOptionalCharacterData)
+	
+	if self.addon.wndMain == nil then
+		self.log:fatal("self.addon.wndMain = nil")
+	end
+
+	self.addon.left, self.addon.top, self.addon.right, self.addon.bottom = self.addon.wndMain:GetAnchorOffsets()
+	self.wndMain:SetAnchorOffsets(self.addon.left, self.addon.top, self.addon.right, self.addon.bottom)
+	
+	
+	
+	self.log:info(self.addon.left .. " " .. self.addon.top .. " " .. self.addon.right .. " " .. self.addon.bottom)
 	--self.all = {wndParent:GetAnchorPoints()}
 	Print("OnContextMenu")
 	self.str = strTarget;
