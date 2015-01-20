@@ -69,8 +69,14 @@ function FaaastJoin:OnDocLoaded()
 			Apollo.AddAddonErrorText(self, "Could not load the main window for some reason.")
 			return
 		end
-		
 	    self.wndMain:Show(false, true)
+	
+		self.wndButton = Apollo.LoadForm(self.xmlDoc, "FaaastJoinButtonWindow", nil, self)
+		if self.wndMain == nil then
+			Apollo.AddAddonErrorText(self, "Could not load the main window for some reason.")
+			return
+		end
+		self.wndButton:Show(false, true)
 
 		-- if the xmlDoc is no longer needed, you should set it to nil
 		-- self.xmlDoc = nil
@@ -80,12 +86,26 @@ function FaaastJoin:OnDocLoaded()
 		Apollo.RegisterSlashCommand("fjdebug", "OnFaaastJoinOn", self)
 
 		-- Do additional Addon initialization here	
+		
+		-- Find ContextMenuPlayer addon
 		self.addon = Apollo.GetAddon("ContextMenuPlayer")
 		if self.addon == nil then
 			self.log:fatal("addon = nil")
 		end
+		
+		-- Remove Events to call the original registered methods manually
 		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuPlayer", self.addon)
-		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuPlayerDetailed", self.addon)
+		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuPlayerDetailed", self.addon)	
+		Apollo.RemoveEventHandler("GenericEvent_NewContextMenuFriend", self.addon)
+		
+		--Hook OnMainWindowClosedPreHook
+		Apollo.RegisterEventHandler("OnMainWindowClosedPreHook", "OnMainWindowClosedPreHook", self) -- 2 args
+		self.addon.org = self.addon.OnMainWindowClosed
+	
+		self.addon.OnMainWindowClosed = function(...)
+			Event_FireGenericEvent("OnMainWindowClosedPreHook")
+			self.addon:org (...)
+		end
 	end
 end
 
@@ -96,43 +116,50 @@ end
 
 -- on SlashCommand "/fjdebug"
 function FaaastJoin:OnFaaastJoinOn()
-	FaaastJoin.log:debug("Test")
+	FaaastJoin.log:debug("OnFaaastJoinOn")
+end
 
+-- on Hook OnMainWindowClosedPreHook
+function FaaastJoin:OnMainWindowClosedPreHook()
+	FaaastJoin.log:debug("OnMainWindowClosedPreHook")
+	self.wndButton:Close()
 end
 
 -- on Context Menu
 function FaaastJoin:OnContextMenu(wndParent, strTarget, unitTarget, tOptionalCharacterData)
+	self.log:debug("OnContextMenu")
 	self.addon:Initialize(wndParent, strTarget, unitTarget, tOptionalCharacterData)
-	
-	if self.addon.wndMain == nil then
-		self.log:fatal("self.addon.wndMain = nil")
-	end
-
-	self.addon.left, self.addon.top, self.addon.right, self.addon.bottom = self.addon.wndMain:GetAnchorOffsets()
-	self.wndMain:SetAnchorOffsets(self.addon.left, self.addon.top, self.addon.right, self.addon.bottom)
-	
-	
-	
-	self.log:info(self.addon.left .. " " .. self.addon.top .. " " .. self.addon.right .. " " .. self.addon.bottom)
-	--self.all = {wndParent:GetAnchorPoints()}
-	Print("OnContextMenu")
-	self.str = strTarget;
-	self.wndMain:Invoke() -- show the window
+	self:DrawButton(strTarget)
 end
 
+-- on Friend Context Menu
 function FaaastJoin:OnFriendContextMenu(wndParent, nFriendId)
-	Print("OnFriendContextMenu")
+	self.log:debug("OnFriendContextMenu")
+	self.addon:InitializeFriend(wndParent, nFriendId)
 	local tFriend = FriendshipLib.GetById(nFriendId)
 	local tAccountFriend = FriendshipLib.GetAccountById(nFriendId)
-
 	if tFriend ~= nil then
-		self.str = self.tFriend.strCharacterName
-		self.wndMain:Invoke() -- show the window
+		self:DrawButton(tFriend.strCharacterName)
 	elseif tAccountFriend ~= nil then
+		-- maybe loop over elements for all chars?
 		if tAccountFriend.arCharacters and tAccountFriend.arCharacters[1] ~= nil then
-			self.str = tAccountFriend.arCharacters[1].strCharacterName
-			self.wndMain:Invoke() -- show the window
+			self:DrawButton(tAccountFriend.arCharacters[1].strCharacterName)
 		end		
+	end
+end
+
+-- DrawButton
+function FaaastJoin:DrawButton(nameString)
+	self.log:debug("DrawButton")
+	self.str = nameString
+	if self.addon.wndMain == nil then
+		self.log:fatal("self.addon.wndMain = nil")
+	else
+		self.addon.left, self.addon.top, self.addon.right, self.addon.bottom = self.addon.wndMain:GetAnchorOffsets()
+		self.wndButton:SetAnchorOffsets(self.addon.left+20, self.addon.top-25, self.addon.right, self.addon.top+30)
+			
+		self.log:debug(self.addon.left .. " " .. self.addon.top .. " " .. self.addon.right .. " " .. self.addon.bottom)
+		self.wndButton:Invoke() -- show the window
 	end
 end
 
@@ -148,6 +175,15 @@ end
 -- when the Cancel button is clicked
 function FaaastJoin:OnCancel()
 	self.wndMain:Close() -- hide the window
+end
+
+-----------------------------------------------------------------------------------------------
+-- FaaastJoinButtonWindow Functions
+-----------------------------------------------------------------------------------------------
+-- when the button is clicked
+function FaaastJoin:OnJoinButton()
+	ChatSystemLib.Command("/join " .. self.str)
+	self.wndButton:Close() -- hide the window
 end
 
 
