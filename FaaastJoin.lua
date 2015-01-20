@@ -8,7 +8,7 @@ require "Window"
 -----------------------------------------------------------------------------------------------
 -- FaaastJoin Module Definition
 -----------------------------------------------------------------------------------------------
-local FaaastJoin = {} 
+FaaastJoin = {} 
  
 -----------------------------------------------------------------------------------------------
 -- Constants
@@ -48,7 +48,7 @@ function FaaastJoin:OnLoad()
 	
 	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuPlayer", 			"OnContextMenu", self) -- 2 args + 2 optional
 	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuPlayerDetailed", 	"OnContextMenu", self) -- 3 args + 1 optional
-	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuFriend", 			"OnContextMenu", self) -- 2 args
+	Apollo.RegisterEventHandler("GenericEvent_NewContextMenuFriend", 			"OnFriendContextMenu", self) -- 2 args
 end
 
 -----------------------------------------------------------------------------------------------
@@ -72,8 +72,7 @@ function FaaastJoin:OnDocLoaded()
 		-- e.g. Apollo.RegisterEventHandler("KeyDown", "OnKeyDown", self)
 		Apollo.RegisterSlashCommand("fjdebug", "OnFaaastJoinOn", self)
 
-
-		-- Do additional Addon initialization here
+		-- Do additional Addon initialization here	
 	end
 end
 
@@ -84,14 +83,32 @@ end
 
 -- on SlashCommand "/fjdebug"
 function FaaastJoin:OnFaaastJoinOn()
+	Print("Test")
+end
+
+-- on Context Menu
+function FaaastJoin:OnContextMenu(wndParent, strTarget, unitTarget, tOptionalCharacterData)
+	--self.left, self.top, self.right, self.bottom = wndParent:GetAnchorPoints()
+	--self.all = {wndParent:GetAnchorPoints()}
+	Print("OnContextMenu")
+	self.str = strTarget;
 	self.wndMain:Invoke() -- show the window
 end
 
--- on SlashCommand "/fjdebug"
-function FaaastJoin:OnContextMenu(wndParent, strTarget, unitTarget, tOptionalCharacterData)
-	Print("OnContextMenu")
-	self.str = strTarget
-	self.wndMain:Invoke() -- show the window
+function FaaastJoin:OnFriendContextMenu(wndParent, nFriendId)
+	Print("OnFriendContextMenu")
+	local tFriend = FriendshipLib.GetById(nFriendId)
+	local tAccountFriend = FriendshipLib.GetAccountById(nFriendId)
+
+	if tFriend ~= nil then
+		self.str = self.tFriend.strCharacterName
+		self.wndMain:Invoke() -- show the window
+	elseif tAccountFriend ~= nil then
+		if tAccountFriend.arCharacters and tAccountFriend.arCharacters[1] ~= nil then
+			self.str = tAccountFriend.arCharacters[1].strCharacterName
+			self.wndMain:Invoke() -- show the window
+		end		
+	end
 end
 
 -----------------------------------------------------------------------------------------------

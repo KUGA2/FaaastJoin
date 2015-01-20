@@ -2,4 +2,5 @@
 <Addon Author="KUGA - MF" APIVersion="9" Name="FaaastJoin" Description="Right click to join">
     <Script Name="FaaastJoin.lua"/>
     <Form Name="FaaastJoin.xml"/>
+    <Script Name="GeminiLogging.lua"/>
 </Addon>
