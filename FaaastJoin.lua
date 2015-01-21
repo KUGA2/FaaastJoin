@@ -162,6 +162,7 @@ function FaaastJoin:DrawButton(nameString)
 		self.wndButton:SetAnchorOffsets(self.addon.left+20, self.addon.top-50, self.addon.right, self.addon.top+30)
 		self.log:debug(self.addon.left .. " " .. self.addon.top .. " " .. self.addon.right .. " " .. self.addon.bottom)
 		self.wndButton:Invoke() -- show the window
+		--self.wndMain:Invoke() -- show the window
 	end
 end
 
