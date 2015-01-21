@@ -152,12 +152,14 @@ end
 function FaaastJoin:DrawButton(nameString)
 	self.log:debug("DrawButton")
 	self.str = nameString
+	if self.str == nil then
+		self.log:fatal("self.str = nil")
+	end
 	if self.addon.wndMain == nil then
 		self.log:fatal("self.addon.wndMain = nil")
 	else
 		self.addon.left, self.addon.top, self.addon.right, self.addon.bottom = self.addon.wndMain:GetAnchorOffsets()
-		self.wndButton:SetAnchorOffsets(self.addon.left+20, self.addon.top-25, self.addon.right, self.addon.top+30)
-			
+		self.wndButton:SetAnchorOffsets(self.addon.left+20, self.addon.top-50, self.addon.right, self.addon.top+30)
 		self.log:debug(self.addon.left .. " " .. self.addon.top .. " " .. self.addon.right .. " " .. self.addon.bottom)
 		self.wndButton:Invoke() -- show the window
 	end
@@ -168,6 +170,7 @@ end
 -----------------------------------------------------------------------------------------------
 -- when the OK button is clicked
 function FaaastJoin:OnOK()
+	self.log:debug("OnOK: /join " .. self.str)
 	ChatSystemLib.Command("/join " .. self.str)
 	self.wndMain:Close() -- hide the window
 end
@@ -182,6 +185,7 @@ end
 -----------------------------------------------------------------------------------------------
 -- when the button is clicked
 function FaaastJoin:OnJoinButton()
+	self.log:debug("OnJoinButton: /join " .. self.str)
 	ChatSystemLib.Command("/join " .. self.str)
 	self.wndButton:Close() -- hide the window
 end
